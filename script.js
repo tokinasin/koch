@@ -342,7 +342,7 @@ async function playGroup(group) {
     // Add space after group
     // const wpm = parseInt(wpmInput.value);
     // const dotDuration = 60 / (50 * wpm);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 2500));
 }
 
 // Start playing Morse code
