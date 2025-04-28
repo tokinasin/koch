@@ -38,6 +38,9 @@ const stopButton = document.getElementById('stop');
 const charInputs = document.querySelectorAll('.char-input');
 const notification = document.getElementById('notification');
 const notificationText = document.getElementById('notification-text');
+const spacingSlider = document.getElementById('spacing-slider');
+const spacingInput = document.getElementById('spacing');
+const spacingValue = document.getElementById('spacing-value');
 
 // Define the Koch sequence order with K and M as the first level
 const kochSequence = [
@@ -173,6 +176,26 @@ function validateToneValue() {
     toneValue.textContent = `${toneInput.value} Hz`;
 
     return toneValue;
+}
+
+function validateSpacingValue() {
+    const defaultSpacing = 2500; // Default spacing value in ms
+
+    // Get the current value
+    let spacingVal = parseInt(spacingInput.value);
+
+    // Check if the value is valid (a number between 1000 and 5000)
+    if (isNaN(spacingVal) || spacingVal < 1000 || spacingVal > 5000 || spacingInput.value.trim() === '') {
+        // Invalid or empty - set to default
+        spacingInput.value = defaultSpacing;
+        spacingSlider.value = defaultSpacing;
+        spacingVal = defaultSpacing;
+    }
+
+    // Update display text
+    spacingValue.textContent = `${spacingInput.value} ms`;
+
+    return spacingVal;
 }
 
 // Generate random string based on selected level
@@ -339,18 +362,18 @@ async function playGroup(group) {
         playedCharacters += group[i];
     }
 
-    // Add space after group
-    // const wpm = parseInt(wpmInput.value);
-    // const dotDuration = 60 / (50 * wpm);
-    await new Promise(resolve => setTimeout(resolve, 2500));
+    // Use the user-defined spacing between groups
+    const groupSpacing = parseInt(spacingInput.value);
+    await new Promise(resolve => setTimeout(resolve, groupSpacing));
 }
 
 // Start playing Morse code
 async function startPlaying() {
-    // Validate WPM and tone values before starting
+    // Validate input values before starting
     validateWpmValue();
     validateToneValue();
-    
+    validateSpacingValue();
+
     // Show a loading indicator while audio initializes (optional)
     if (!audioInitialized) {
         playButton.textContent = '準備中...';
@@ -506,6 +529,10 @@ toneInput.addEventListener('blur', () => {
     validateToneValue();
 });
 
+spacingInput.addEventListener('blur', () => {
+    validateSpacingValue();
+});
+
 playButton.addEventListener('click', async () => {
     if (isPlaying && isPaused) {
         resumePlaying();
@@ -554,6 +581,16 @@ toneInput.addEventListener('input', () => {
     if (oscillator) {
         oscillator.frequency.value = parseInt(toneInput.value);
     }
+});
+
+spacingSlider.addEventListener('input', () => {
+    spacingInput.value = spacingSlider.value;
+    spacingValue.textContent = `${spacingSlider.value} ms`;
+});
+
+spacingInput.addEventListener('input', () => {
+    spacingSlider.value = spacingInput.value;
+    spacingValue.textContent = `${spacingInput.value} ms`;
 });
 
 // Initial focus
