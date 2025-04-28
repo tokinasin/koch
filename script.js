@@ -135,6 +135,46 @@ function initAudio() {
     return warmupAudio();
 }
 
+function validateWpmValue() {
+    const defaultWpm = 15; // Default WPM value
+
+    // Get the current value
+    let wpmValue = parseInt(wpmInput.value);
+
+    // Check if the value is valid (a number between 5 and 50)
+    if (isNaN(wpmValue) || wpmValue < 5 || wpmValue > 50 || wpmInput.value.trim() === '') {
+        // Invalid or empty - set to default
+        wpmInput.value = defaultWpm;
+        wpmSlider.value = defaultWpm;
+        wpmValue = defaultWpm;
+    }
+
+    // Update display text
+    wpmValue.textContent = `${wpmInput.value} WPM`;
+
+    return wpmValue;
+}
+
+function validateToneValue() {
+    const defaultTone = 700; // Default tone value
+
+    // Get the current value
+    let toneValue = parseInt(toneInput.value);
+
+    // Check if the value is valid
+    if (isNaN(toneValue) || toneValue < 400 || toneValue > 1000 || toneInput.value.trim() === '') {
+        // Invalid or empty - set to default
+        toneInput.value = defaultTone;
+        toneSlider.value = defaultTone;
+        toneValue = defaultTone;
+    }
+
+    // Update display text
+    toneValue.textContent = `${toneInput.value} Hz`;
+
+    return toneValue;
+}
+
 // Generate random string based on selected level
 function generateRandomString(length, level) {
     let charset = '';
@@ -307,6 +347,10 @@ async function playGroup(group) {
 
 // Start playing Morse code
 async function startPlaying() {
+    // Validate WPM and tone values before starting
+    validateWpmValue();
+    validateToneValue();
+    
     // Show a loading indicator while audio initializes (optional)
     if (!audioInitialized) {
         playButton.textContent = '準備中...';
@@ -454,6 +498,14 @@ charInputs.forEach((input, index) => {
 });
 
 // Event Listeners
+wpmInput.addEventListener('blur', () => {
+    validateWpmValue();
+});
+
+toneInput.addEventListener('blur', () => {
+    validateToneValue();
+});
+
 playButton.addEventListener('click', async () => {
     if (isPlaying && isPaused) {
         resumePlaying();
