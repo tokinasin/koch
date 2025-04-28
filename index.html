@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Koch Method</title>
+    <!-- DaisyUI and Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .char-input:focus {
+            border-color: hsl(var(--p));
+        }
+        .input-instruction {
+            font-weight: bold;
+            color: hsl(var(--p));
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto px-4 py-8 max-w-xl">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h1 class="card-title text-2xl md:text-3xl text-center mb-6">Koch Method</h1>
+
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text font-medium">難易度 </span>
+                    </label>
+                    <select id="level" class="select select-bordered w-full">
+                    </select>
+                </div>
+
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text font-medium">速度 (WPM)</span>
+                        <span class="label-text-alt" id="wpm-value">15 WPM</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="wpm-slider" min="5" max="50" value="15" class="range range-secondary range-sm flex-1" step="1">
+                        <input type="number" id="wpm" min="5" max="50" value="15" class="input input-bordered w-20 text-center">
+                    </div>
+                </div>
+
+                <div class="form-control w-full mb-4">
+                    <label class="label">
+                        <span class="label-text font-medium">トーン (Hz)</span>
+                        <span class="label-text-alt" id="tone-value">700 Hz</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="tone-slider" min="400" max="1000" value="700" class="range range-secondary range-sm flex-1" step="10">
+                        <input type="number" id="tone" min="400" max="1000" value="700" class="input input-bordered w-20 text-center">
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 my-4">
+                    <button id="play" class="btn btn-primary flex-1">開始</button>
+                    <button id="pause" class="btn btn-warning flex-1" disabled>一時停止</button>
+                    <button id="stop" class="btn btn-error flex-1" disabled>終了</button>
+                </div>
+
+                <div class="alert alert-info mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span class="input-instruction">5文字ずつ入力してください。次のグループが再生される前に自動で採点されます。</span>
+                </div>
+
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-medium">回答</span>
+                    </label>
+                    <div id="char-input-container" class="flex justify-between gap-2 mb-2">
+                        <input type="text" class="char-input input input-bordered w-full text-center text-lg uppercase" maxlength="1" autocomplete="off">
+                        <input type="text" class="char-input input input-bordered w-full text-center text-lg uppercase" maxlength="1" autocomplete="off">
+                        <input type="text" class="char-input input input-bordered w-full text-center text-lg uppercase" maxlength="1" autocomplete="off">
+                        <input type="text" class="char-input input input-bordered w-full text-center text-lg uppercase" maxlength="1" autocomplete="off">
+                        <input type="text" class="char-input input input-bordered w-full text-center text-lg uppercase" maxlength="1" autocomplete="off">
+                    </div>
+                </div>
+
+                <div id="notification" class="alert mt-4 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span id="notification-text">Error! Task failed successfully.</span>
+                </div>
+            </div>
+        </div>
+        <footer class="footer footer-center p-3 mt-4 md:mt-8 text-xs md:text-sm bg-base-200 rounded-lg">
+            <div class="max-w-md mx-auto">
+                <p>© 2025 - tokinasin</p>
+            </div>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+    <script>
+    </script>
+</body>
+</html>
+
