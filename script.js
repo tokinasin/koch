@@ -94,21 +94,45 @@ function generateLevelOptions() {
 // Call this function when the page loads
 document.addEventListener('DOMContentLoaded', generateLevelOptions);
 
+let audioInitialized = false;
+
+// Pre-warm the audio system
+function warmupAudio() {
+    if (audioInitialized) return Promise.resolve();
+
+    return new Promise(resolve => {
+        console.log("Warming up audio system...");
+
+        // Initialize audio context
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        gainNode = audioContext.createGain();
+        gainNode.gain.value = 0; // Silent
+        gainNode.connect(audioContext.destination);
+
+        oscillator = audioContext.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = parseInt(toneInput.value);
+        oscillator.connect(gainNode);
+        oscillator.start();
+
+        // Play a silent note to warm up the audio system
+        const now = audioContext.currentTime;
+        gainNode.gain.setValueAtTime(0.01, now); // Very quiet
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+
+        // Small delay to ensure the system is ready
+        setTimeout(() => {
+            audioInitialized = true;
+            console.log("Audio system warmed up");
+            resolve();
+        }, 300);
+    });
+}
 
 // Initialize Web Audio API
 function initAudio() {
-    if (audioContext) return;
-
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    gainNode = audioContext.createGain();
-    gainNode.gain.value = 0;
-    gainNode.connect(audioContext.destination);
-
-    oscillator = audioContext.createOscillator();
-    oscillator.type = 'sine';
-    oscillator.frequency.value = parseInt(toneInput.value);
-    oscillator.connect(gainNode);
-    oscillator.start();
+    if (audioInitialized) return Promise.resolve();
+    return warmupAudio();
 }
 
 // Generate random string based on selected level
@@ -234,7 +258,6 @@ function playCharacter(char) {
 }
 
 // Play a group of characters
-// Play a group of characters
 async function playGroup(group) {
     // Check the previous group answer before playing the next one (except first group)
     if (currentGroupIndex > 0) {
@@ -284,7 +307,19 @@ async function playGroup(group) {
 
 // Start playing Morse code
 async function startPlaying() {
-    initAudio();
+    // Show a loading indicator while audio initializes (optional)
+    if (!audioInitialized) {
+        // You could add a loading indicator here
+        playButton.textContent = '準備中...';
+        playButton.disabled = true;
+    }
+
+    // Wait for audio to be properly initialized
+    await initAudio();
+
+    // Reset button state
+    playButton.disabled = false;
+
     isPlaying = true;
     isPaused = false;
     playedCharacters = '';
@@ -298,6 +333,9 @@ async function startPlaying() {
     updateButtons();
     clearCharInputs();
     focusFirstEmptyInput();
+
+    // Add a short delay before playing the first group
+    await new Promise(resolve => setTimeout(resolve, 300));
 
     // Main playback loop
     while (isPlaying) {
@@ -415,13 +453,13 @@ charInputs.forEach((input, index) => {
 });
 
 // Event Listeners
-playButton.addEventListener('click', () => {
+playButton.addEventListener('click', async () => {
     if (isPlaying && isPaused) {
         resumePlaying();
     } else {
-        startPlaying();
+        await startPlaying();
     }
-    focusFirstEmptyInput(); // Auto-focus on text input when Play is clicked
+    focusFirstEmptyInput();
 });
 
 pauseButton.addEventListener('click', () => {
