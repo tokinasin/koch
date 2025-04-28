@@ -309,7 +309,6 @@ async function playGroup(group) {
 async function startPlaying() {
     // Show a loading indicator while audio initializes (optional)
     if (!audioInitialized) {
-        // You could add a loading indicator here
         playButton.textContent = '準備中...';
         playButton.disabled = true;
     }
@@ -332,7 +331,6 @@ async function startPlaying() {
 
     updateButtons();
     clearCharInputs();
-    focusFirstEmptyInput();
 
     // Add a short delay before playing the first group
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -340,6 +338,9 @@ async function startPlaying() {
     // Main playback loop
     while (isPlaying) {
         if (!isPaused) {
+            // Re-focus here before each group to maintain focus
+            focusFirstEmptyInput();
+
             // Check if we need more groups
             if (currentGroupIndex >= characterGroups.length - 5) {
                 generateMoreGroups();
@@ -456,10 +457,17 @@ charInputs.forEach((input, index) => {
 playButton.addEventListener('click', async () => {
     if (isPlaying && isPaused) {
         resumePlaying();
+        focusFirstEmptyInput();
     } else {
-        await startPlaying();
+        // Focus first before starting playback
+        clearCharInputs();
+        focusFirstEmptyInput();
+
+        // Small delay to ensure focus is established
+        setTimeout(() => {
+            startPlaying();
+        }, 50);
     }
-    focusFirstEmptyInput();
 });
 
 pauseButton.addEventListener('click', () => {
