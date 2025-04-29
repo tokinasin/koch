@@ -199,8 +199,10 @@ function validateSpacingValue() {
 }
 
 // Generate random string based on selected level
+
 function generateRandomString(length, level) {
     let charset = '';
+    const frequencyBias = document.getElementById('frequency-bias').checked;
 
     if (level === 'all') {
         charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,./=?';
@@ -209,9 +211,85 @@ function generateRandomString(length, level) {
         charset = level.toUpperCase();
     }
 
+    // If frequency bias is enabled, use weighted selection
+    if (frequencyBias && level !== 'all') {
+        return generateWeightedString(length, level);
+    }
+
+    // Regular random selection
     let result = '';
     for (let i = 0; i < length; i++) {
         result += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+
+    return result;
+}
+
+function generateWeightedString(length, level) {
+    // Get current level characters
+    const currentChars = level.toUpperCase().split('');
+
+    // Find current position in Koch sequence
+    let currentLevelIndex = 0;
+    for (let i = 0; i < kochSequence.length; i++) {
+        if (Array.isArray(kochSequence[i])) {
+            // For the first level with array of chars
+            if (currentChars.length === kochSequence[i].length) {
+                currentLevelIndex = i;
+                break;
+            }
+        } else if (currentChars.length === i + 2) { // +2 because first level has 2 chars
+            currentLevelIndex = i;
+            break;
+        }
+    }
+
+    // Create weights for characters - more recent = higher weight
+    const weights = {};
+    const baseWeight = 1;
+
+    // Initialize all weights
+    for (let i = 0; i < currentChars.length; i++) {
+        weights[currentChars[i]] = baseWeight;
+    }
+
+    // Increase weights for more recent characters
+    // First handle the special first level
+    if (currentLevelIndex > 0) {
+        const firstLevelChars = kochSequence[0];
+        for (let char of firstLevelChars) {
+            weights[char] = baseWeight;
+        }
+
+        // Apply increasing weights for subsequent characters
+        for (let i = 1; i <= currentLevelIndex; i++) {
+            const char = kochSequence[i];
+            if (typeof char === 'string') {
+                weights[char] = baseWeight + (i * 0.5); // Increase weight by 0.5 for each level
+            }
+        }
+    }
+
+    // Generate weighted random string
+    let result = '';
+    let totalWeight = 0;
+
+    // Calculate total weight
+    for (let char in weights) {
+        totalWeight += weights[char];
+    }
+
+    for (let i = 0; i < length; i++) {
+        let random = Math.random() * totalWeight;
+        let weightSum = 0;
+
+        for (let char in weights) {
+            weightSum += weights[char];
+            if (random <= weightSum) {
+                result += char;
+                break;
+            }
+        }
     }
 
     return result;
