@@ -16,6 +16,29 @@
             color: hsl(var(--p));
             font-size: 1.1rem;
         }
+        .balloon {
+          position: absolute;
+          padding: 8px 15px;
+          background-color: #ff5252;
+          color: white;
+          border-radius: 15px;
+          font-weight: bold;
+          font-size: 18px;
+          z-index: 1000;
+          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+          text-align: center;
+          min-width: 30px;
+        }
+        .balloon:after {
+          content: '';
+          position: absolute;
+          bottom: -8px;
+          left: 50%;
+          margin-left: -8px;
+          border-width: 8px 8px 0;
+          border-style: solid;
+          border-color: #ff5252 transparent;
+        }
     </style>
 </head>
 <body>

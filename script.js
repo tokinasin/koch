@@ -321,7 +321,6 @@ function playCharacter(char) {
 }
 
 // Play a group of characters
-// Play a group of characters
 async function playGroup(group) {
     // Check the previous group answer before playing the next one (except first group)
     if (currentGroupIndex > 0) {
@@ -338,18 +337,18 @@ async function playGroup(group) {
                     // Green for correct characters
                     charInputs[i].style.backgroundColor = '#4ade80';
                 } else {
-                    // Red for incorrect characters and show correct character
+                    // Red for incorrect characters and show balloon with correct character
                     charInputs[i].style.backgroundColor = '#f87171';
-                    charInputs[i].value = userInput[i] + '→' + previousGroup[i];
+                    showCorrectCharBalloon(charInputs[i], previousGroup[i]);
                 }
-            } else {
-                // If character is missing, mark as red and show correct character
+            } else if (i < previousGroup.length) {
+                // If character is missing, mark as red and show balloon
                 charInputs[i].style.backgroundColor = '#f87171';
-                charInputs[i].value = '→' + previousGroup[i];
+                showCorrectCharBalloon(charInputs[i], previousGroup[i]);
             }
         }
 
-        // Wait 1.5 seconds with the highlight to give time to read corrections
+        // Wait with the highlight to give time to see corrections
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         // Clear highlighting and input fields
@@ -445,6 +444,33 @@ function stopPlaying() {
     isPlaying = false;
     isPaused = false;
     updateButtons();
+}
+
+function showCorrectCharBalloon(inputElement, correctChar) {
+    // Create balloon element
+    const balloon = document.createElement('div');
+    balloon.className = 'balloon';
+    balloon.textContent = correctChar;
+
+    // Add to document first (needed to get proper dimensions)
+    document.body.appendChild(balloon);
+
+    // Get positions after adding to DOM
+    const inputRect = inputElement.getBoundingClientRect();
+
+    // Position the balloon centered above the input
+    // Account for scroll position
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+
+    balloon.style.position = 'absolute';
+    balloon.style.left = `${scrollLeft + inputRect.left + (inputRect.width/2) - (balloon.offsetWidth/2)}px`;
+    balloon.style.top = `${scrollTop + inputRect.top - balloon.offsetHeight - 10}px`; // 10px gap
+
+    // Remove after animation completes
+    setTimeout(() => {
+        document.body.removeChild(balloon);
+    }, 1500);
 }
 
 // Update button states
