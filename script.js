@@ -321,29 +321,36 @@ function playCharacter(char) {
 }
 
 // Play a group of characters
+// Play a group of characters
 async function playGroup(group) {
     // Check the previous group answer before playing the next one (except first group)
     if (currentGroupIndex > 0) {
         const userInput = getUserInput().toUpperCase();
         const previousGroup = characterGroups[currentGroupIndex - 1];
 
-        // Verify each character individually
-        const allCorrect = userInput === previousGroup;
-
         // Apply appropriate highlighting for each character
         for (let i = 0; i < 5; i++) {
             if (i < userInput.length && i < previousGroup.length) {
-                // Green for correct characters, red for incorrect
+                // Check if character is correct
                 const isCharCorrect = userInput[i] === previousGroup[i];
-                charInputs[i].style.backgroundColor = isCharCorrect ? '#4ade80' : '#f87171'; // Green or red
+
+                if (isCharCorrect) {
+                    // Green for correct characters
+                    charInputs[i].style.backgroundColor = '#4ade80';
+                } else {
+                    // Red for incorrect characters and show correct character
+                    charInputs[i].style.backgroundColor = '#f87171';
+                    charInputs[i].value = userInput[i] + '→' + previousGroup[i];
+                }
             } else {
-                // If character is missing, mark as red
-                charInputs[i].style.backgroundColor = '#f87171'; // Red
+                // If character is missing, mark as red and show correct character
+                charInputs[i].style.backgroundColor = '#f87171';
+                charInputs[i].value = '→' + previousGroup[i];
             }
         }
 
-        // Wait 0.5 seconds with the highlight
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait 1.5 seconds with the highlight to give time to read corrections
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
         // Clear highlighting and input fields
         charInputs.forEach(input => {
