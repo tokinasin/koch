@@ -346,92 +346,78 @@ function generateMoreGroups() {
     characterGroups.push(...newGroups);
 }
 
-// Play a dot with smooth audio transitions
-function playDot() {
-    const wpm = parseInt(wpmInput.value);
-    const dotDuration = 60 / (50 * wpm); // in seconds
-    const rampTime = 0.005; // 5ms ramp time to avoid clicks
+// ==========================================
+// Audio scheduling logic
+// ==========================================
 
-    const now = audioContext.currentTime;
-
-    // Smooth fade in
-    gainNode.gain.cancelScheduledValues(now);
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(1, now + rampTime);
-
-    // Smooth fade out
-    gainNode.gain.setValueAtTime(1, now + dotDuration - rampTime);
-    gainNode.gain.linearRampToValueAtTime(0, now + dotDuration);
-
-    return dotDuration;
+// Stop audio immediately
+function stopAudioImmediate() {
+    if (audioContext && gainNode) {
+        const now = audioContext.currentTime;
+        gainNode.gain.cancelScheduledValues(now);
+        try {
+            // Quick fade out to prevent clicks
+            gainNode.gain.setValueAtTime(gainNode.gain.value || 0, now);
+        } catch(e) {
+            gainNode.gain.setValueAtTime(0, now);
+        }
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.01);
+    }
 }
 
-// Play a dash with smooth audio transitions
-function playDash() {
-    const wpm = parseInt(wpmInput.value);
-    const dotDuration = 60 / (50 * wpm); // in seconds
+// Schedule dot
+function scheduleDot(startTime, dotDuration) {
+    const rampTime = 0.005; // 5ms ramp time to avoid clicks
+    gainNode.gain.setValueAtTime(0, startTime);
+    gainNode.gain.linearRampToValueAtTime(1, startTime + rampTime);
+    gainNode.gain.setValueAtTime(1, startTime + dotDuration - rampTime);
+    gainNode.gain.linearRampToValueAtTime(0, startTime + dotDuration);
+    // Ensure complete silence
+    gainNode.gain.setValueAtTime(0, startTime + dotDuration + 0.001);
+    return startTime + dotDuration;
+}
+
+// Schedule dash
+function scheduleDash(startTime, dotDuration) {
     const dashDuration = 3 * dotDuration;
     const rampTime = 0.005; // 5ms ramp time to avoid clicks
-
-    const now = audioContext.currentTime;
-
-    // Smooth fade in
-    gainNode.gain.cancelScheduledValues(now);
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(1, now + rampTime);
-
-    // Smooth fade out
-    gainNode.gain.setValueAtTime(1, now + dashDuration - rampTime);
-    gainNode.gain.linearRampToValueAtTime(0, now + dashDuration);
-
-    return dashDuration;
+    gainNode.gain.setValueAtTime(0, startTime);
+    gainNode.gain.linearRampToValueAtTime(1, startTime + rampTime);
+    gainNode.gain.setValueAtTime(1, startTime + dashDuration - rampTime);
+    gainNode.gain.linearRampToValueAtTime(0, startTime + dashDuration);
+    // Ensure complete silence
+    gainNode.gain.setValueAtTime(0, startTime + dashDuration + 0.001);
+    return startTime + dashDuration;
 }
 
-// Play a character in Morse code
-function playCharacter(char) {
-    return new Promise(resolve => {
-        const wpm = parseInt(wpmInput.value);
-        const dotDuration = 60 / (50 * wpm); // in seconds
+// Schedule character
+function scheduleCharacter(char, startTime, dotDuration) {
+    char = char.toUpperCase();
+    if (!morseCode[char]) {
+        // Handle unknown chars as word spaces (7 dots)
+        return startTime + dotDuration * 7;
+    }
 
-        char = char.toUpperCase();
-        if (!morseCode[char]) {
-            setTimeout(resolve, dotDuration * 1000);
-            return;
+    const morse = morseCode[char];
+    let currentTime = startTime;
+
+    for (let i = 0; i < morse.length; i++) {
+        const symbol = morse[i];
+        if (symbol === '.') {
+            currentTime = scheduleDot(currentTime, dotDuration);
+        } else if (symbol === '-') {
+            currentTime = scheduleDash(currentTime, dotDuration);
         }
 
-        const morse = morseCode[char];
-        let totalDelay = 0;
-
-        for (let i = 0; i < morse.length; i++) {
-            const symbol = morse[i];
-            setTimeout(() => {
-                if (symbol === '.') {
-                    playDot();
-                } else if (symbol === '-') {
-                    playDash();
-                }
-            }, totalDelay * 1000);
-
-            if (symbol === '.') {
-                totalDelay += dotDuration;
-            } else if (symbol === '-') {
-                totalDelay += 3 * dotDuration;
-            }
-
-            // Add inter-element gap (one dot duration)
-            if (i < morse.length - 1) {
-                totalDelay += dotDuration;
-            }
+        // Inter-element gap (1 dot)
+        if (i < morse.length - 1) {
+            currentTime += dotDuration;
         }
-
-        // Add inter-character gap (3 dot durations)
-        totalDelay += 3 * dotDuration;
-
-        setTimeout(resolve, totalDelay * 1000);
-    });
+    }
+    return currentTime;
 }
 
-// Play a group of characters
+// Play group and handle UI validation
 async function playGroup(group) {
     // Check the previous group answer before playing the next one (except first group)
     if (currentGroupIndex > 0) {
@@ -472,16 +458,45 @@ async function playGroup(group) {
         focusFirstEmptyInput();
     }
 
-    // Play the current group
+    // Prepare scheduling
+    const wpm = parseInt(wpmInput.value);
+    const dotDuration = 60 / (50 * wpm); // in seconds
+    const groupSpacing = parseInt(spacingInput.value) / 1000; // ms to seconds
+
+    // Start scheduling with a slight margin
+    let scheduleTime = audioContext.currentTime + 0.05; 
+
+    // Schedule all characters in the group
     for (let i = 0; i < group.length; i++) {
-        if (!isPlaying || isPaused) return;
-        await playCharacter(group[i]);
+        scheduleTime = scheduleCharacter(group[i], scheduleTime, dotDuration);
         playedCharacters += group[i];
+        
+        // Inter-character gap (3 dots)
+        if (i < group.length - 1) {
+            scheduleTime += 3 * dotDuration;
+        }
     }
 
-    // Use the user-defined spacing between groups
-    const groupSpacing = parseInt(spacingInput.value);
-    await new Promise(resolve => setTimeout(resolve, groupSpacing));
+    // Add inter-group spacing
+    scheduleTime += groupSpacing;
+
+    // Calculate wait time until scheduling completes
+    // Wait in small chunks to react instantly to pause/stop
+    const totalWaitTimeMs = (scheduleTime - audioContext.currentTime) * 1000;
+    const checkInterval = 100;
+    let waited = 0;
+    
+    while (waited < totalWaitTimeMs) {
+        if (!isPlaying || isPaused) {
+            stopAudioImmediate(); // Mute immediately
+            return false; // Return false if interrupted
+        }
+        const waitSlice = Math.min(checkInterval, totalWaitTimeMs - waited);
+        await new Promise(resolve => setTimeout(resolve, waitSlice));
+        waited += waitSlice;
+    }
+    
+    return true; // Return true if fully played
 }
 
 // Start playing Morse code
@@ -530,8 +545,12 @@ async function startPlaying() {
                 generateMoreGroups();
             }
 
-            await playGroup(characterGroups[currentGroupIndex]);
-            currentGroupIndex++;
+            // Play group (returns true if completed)
+            const completed = await playGroup(characterGroups[currentGroupIndex]);
+            
+            if (completed) {
+                currentGroupIndex++;
+            }
         } else {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
@@ -541,6 +560,7 @@ async function startPlaying() {
 // Pause playing
 function pausePlaying() {
     isPaused = true;
+    stopAudioImmediate();
     updateButtons();
 }
 
@@ -554,6 +574,7 @@ function resumePlaying() {
 function stopPlaying() {
     isPlaying = false;
     isPaused = false;
+    stopAudioImmediate();
     updateButtons();
 }
 
@@ -580,7 +601,9 @@ function showCorrectCharBalloon(inputElement, correctChar) {
 
     // Remove after animation completes
     setTimeout(() => {
-        document.body.removeChild(balloon);
+        if(document.body.contains(balloon)) {
+            document.body.removeChild(balloon);
+        }
     }, 1500);
 }
 
@@ -624,6 +647,7 @@ function clearCharInputs() {
     charInputs.forEach(input => {
         input.value = '';
         input.classList.remove('input-success', 'input-error');
+        input.style.backgroundColor = ''; // Clear background color
     });
 }
 
