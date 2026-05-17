@@ -87,6 +87,30 @@ function generateLevelOptions() {
         levelSelect.appendChild(option);
     }
 
+    // all alphabets
+    const alphaOption = document.createElement('option');
+    alphaOption.value = 'alphabet';
+    alphaOption.textContent = 'Alphabet only';
+    levelSelect.appendChild(alphaOption);
+
+    // all numbers
+    const numOption = document.createElement('option');
+    numOption.value = 'numbers';
+    numOption.textContent = 'Numbers only';
+    levelSelect.appendChild(numOption);
+
+    // all symbols
+    const symbolsOption = document.createElement('option');
+    symbolsOption.value = 'symbols';
+    symbolsOption.textContent = 'Symbols only';
+    levelSelect.appendChild(symbolsOption);
+
+    // all alphabets + numbers
+    const alphaNumOption = document.createElement('option');
+    alphaNumOption.value = 'alphanum';
+    alphaNumOption.textContent = 'Alphabet + Numbers';
+    levelSelect.appendChild(alphaNumOption);
+    
     // Add the "All characters" option
     const allOption = document.createElement('option');
     allOption.value = 'all';
@@ -153,7 +177,7 @@ function validateWpmValue() {
     }
 
     // Update display text
-    wpmValue.textContent = `${wpmInput.value} WPM`;
+    document.getElementById('wpm-value').textContent = `${wpmInput.value} WPM`;
 
     return wpmValue;
 }
@@ -173,7 +197,7 @@ function validateToneValue() {
     }
 
     // Update display text
-    toneValue.textContent = `${toneInput.value} Hz`;
+    document.getElementById('tone-value').textContent = `${toneInput.value} Hz`;
 
     return toneValue;
 }
@@ -193,7 +217,7 @@ function validateSpacingValue() {
     }
 
     // Update display text
-    spacingValue.textContent = `${spacingInput.value} ms`;
+    document.getElementById('spacing-value').textContent = `${spacingInput.value} ms`;
 
     return spacingVal;
 }
@@ -206,13 +230,22 @@ function generateRandomString(length, level) {
 
     if (level === 'all') {
         charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789,./=?';
+    } else if (level === 'alphabet') {
+        charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    } else if (level === 'alphanum') {
+        charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    } else if (level === 'numbers') {
+        charset = '0123456789';
+    } else if (level === 'symbols') {
+        charset = ',./=?';
     } else {
         // Convert the level string back to an array of characters
         charset = level.toUpperCase();
     }
 
     // If frequency bias is enabled, use weighted selection
-    if (frequencyBias && level !== 'all') {
+    const specialLevels = ['all', 'alphabet', 'alphanum', 'numbers', 'symbols'];
+    if (frequencyBias && !specialLevels.includes(level)) {
         return generateWeightedString(length, level);
     }
 
